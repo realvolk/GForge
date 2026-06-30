@@ -6,11 +6,34 @@ GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 export VFF_DIR GFORGE_DIR
 
+command -v jq >/dev/null || { echo "jq is required. Install with: emerge app-misc/jq"; exit 1; }
+
 source "${VFF_DIR}/lib/core.sh"
-vff_source_all
+source "${VFF_DIR}/lib/state.sh"
+
+source "${VFF_DIR}/tui/forgetui.sh"
+source "${VFF_DIR}/tui/selections.sh"
+
+source "${VFF_DIR}/lib/fs/partition.sh"
+source "${VFF_DIR}/lib/fs/filesystem.sh"
+source "${VFF_DIR}/lib/fs/mount.sh"
+source "${VFF_DIR}/lib/boot/grub.sh"
+source "${VFF_DIR}/lib/boot/uki.sh"
+source "${VFF_DIR}/lib/boot/efistub.sh"
+source "${VFF_DIR}/lib/boot/refind.sh"
+source "${VFF_DIR}/lib/init/services.sh"
+source "${VFF_DIR}/lib/net/network.sh"
+source "${VFF_DIR}/lib/hw/cpu.sh"
+source "${VFF_DIR}/lib/hw/gpu.sh"
+source "${VFF_DIR}/lib/system/hostname.sh"
+source "${VFF_DIR}/lib/users.sh"
+source "${VFF_DIR}/lib/post/install.sh"
+source "${VFF_DIR}/lib/stage/pipeline.sh"
+
 source "${GFORGE_DIR}/profiles/gentoo.sh"
 source "${GFORGE_DIR}/lib/tui/gentoo.sh"
 source "${GFORGE_DIR}/lib/helpers/cpu-optimize.sh"
+source "${GFORGE_DIR}/lib/helpers/wiki.sh"
 source "${GFORGE_DIR}/lib/helpers/fetch-handbook.sh"
 source "${GFORGE_DIR}/lib/post/gentoo.sh"
 
@@ -23,7 +46,7 @@ vff_preflight() {
 }
 
 gforge_welcome_art() {
-    tui_msg_quick "GentooForge by realvolk" "
+    tui_msg_quick "GentooForge" "
    __________________
  < Gentoo Linux - live free >
   ------------------

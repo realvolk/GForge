@@ -4,7 +4,7 @@ source "${VFF_DIR}/profiles/gentoo.sh"
 DISTRO_NAME="Gentoo Linux"
 DISTRO_ID="gentoo"
 VFF_BOOTLOADER_ID="Gentoo"
-VFF_REQUIRED_TOOLS="sgdisk parted partprobe mount lsblk wipefs mkfs.fat mkfs.ext4"
+VFF_REQUIRED_TOOLS="sgdisk parted partprobe mount lsblk wipefs mkfs.fat mkfs.ext4 jq"
 
 ESP_MOUNT="/efi"
 
@@ -29,15 +29,15 @@ BOOTLOADERS=()
 if [[ "${VFF_BOOT_MODE}" == "bios" ]]; then
     BOOTLOADERS=("grub")
 else
-    BOOTLOADERS=("grub" "systemd-boot" "efistub" "refind")
+    BOOTLOADERS=("grub" "GRUB" "systemd-boot" "systemd-boot" "efistub" "EFIStub" "refind" "rEFInd")
 fi
 
-FS_TYPES=("ext4" "xfs" "btrfs" "f2fs")
-INIT_SYSTEMS=("openrc" "systemd")
-NETWORK_STACKS=("networkmanager" "dhcpcd+iwd")
-AUDIO_CHOICES=("pipewire" "pulseaudio" "none")
+FS_TYPES=("ext4" "ext4 filesystem" "xfs" "XFS filesystem" "btrfs" "btrfs filesystem" "f2fs" "f2fs filesystem")
+INIT_SYSTEMS=("openrc" "OpenRC" "systemd" "systemd")
+NETWORK_STACKS=("networkmanager" "NetworkManager" "dhcpcd+iwd" "dhcpcd + iwd")
+AUDIO_CHOICES=("pipewire" "PipeWire" "pulseaudio" "PulseAudio" "none" "No audio")
 
-DESKTOP_CHOICES=("gnome" "kde" "xfce" "i3" "none")
+DESKTOP_CHOICES=("gnome" "GNOME" "kde" "KDE Plasma" "xfce" "XFCE" "i3" "i3 window manager" "none" "No desktop")
 
 declare -A DESKTOP_PACKAGES
 DESKTOP_PACKAGES=(
@@ -48,7 +48,7 @@ DESKTOP_PACKAGES=(
     ["none"]=""
 )
 
-DISPLAY_MANAGER_CHOICES=("gdm" "sddm" "lightdm" "none")
+DISPLAY_MANAGER_CHOICES=("gdm" "GDM" "sddm" "SDDM" "lightdm" "LightDM" "none" "None")
 
 declare -A AUDIO_PACKAGES
 AUDIO_PACKAGES=(
@@ -68,8 +68,8 @@ GPU_PACKAGES=(
     ["unknown"]="media-libs/mesa x11-drivers/xf86-video-vesa"
 )
 
-SHELL_CHOICES=("bash" "zsh" "fish")
-PRIV_ESCALATION_CHOICES=("sudo" "doas" "none")
+SHELL_CHOICES=("bash" "Bash" "zsh" "Zsh" "fish" "Fish")
+PRIV_ESCALATION_CHOICES=("sudo" "sudo" "doas" "doas" "none" "none")
 
 declare -A EXTRA_PACKAGES
 EXTRA_PACKAGES=(
