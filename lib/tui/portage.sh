@@ -137,8 +137,37 @@ gforge_configure_telemetry() {
 }
 
 gforge_configure_video_cards() {
-    local gpu
+    local gpu vm
     gpu=$(get_gpu_vendor)
+    vm=$(detect_vm)
+
+    if [[ "${vm}" != "none" ]]; then
+        tui_msg_quick "VM Detected" "Running in ${vm}. Selecting appropriate GPU driver."
+        case "${vm}" in
+            qemu|kvm)
+                state_set VIDEO_CARDS "virgl"
+                state_set GPU_USE_FLAGS "-intel -nouveau -nvidia -radeon"
+                ;;
+            vmware)
+                state_set VIDEO_CARDS "vmwgfx"
+                state_set GPU_USE_FLAGS "-intel -nouveau -nvidia -radeon"
+                ;;
+            virtualbox)
+                state_set VIDEO_CARDS "vboxvideo"
+                state_set GPU_USE_FLAGS "-intel -nouveau -nvidia -radeon"
+                ;;
+        esac
+        mkdir -p /mnt/etc/portage/package.use
+        echo "*/* VIDEO_CARDS: -* $(state_get VIDEO_CARDS)" > /mnt/etc/portage/package.use/00video_cards
+        mkdir -p /mnt/etc/portage
+        if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^USE=" /mnt/etc/portage/make.conf 2>/dev/null; then
+            sed -i "s/^USE=\"/USE=\"$(state_get GPU_USE_FLAGS) /" /mnt/etc/portage/make.conf
+        else
+            echo "USE=\"$(state_get GPU_USE_FLAGS)\"" >> /mnt/etc/portage/make.conf
+        fi
+        return 0
+    fi
+    
     if tui_yesno "VIDEO_CARDS" "Configure VIDEO_CARDS for detected GPU ($gpu)?"; then
         local driver=""
         local use_flags=""

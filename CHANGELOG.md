@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2.1 (2026-06-30) — VM GPU Detection
+
+### Added
+- Automatic GPU driver selection for virtual machines (virgl for QEMU/KVM, vmwgfx for VMware, vboxvideo for VirtualBox)
+- VM GPU USE flags and VIDEO_CARDS written to make.conf and package.use during pre-install
+
 ## v1.0.2.0 (2026-06-30) — Pre-Install Flag Fixes & Base System
 
 ### Added
