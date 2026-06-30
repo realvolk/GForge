@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 VFF_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/VFF"
 GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-
+export FORGE_TUI="${GFORGE_DIR}/forge-tui/target/release/forge-tui"
 export VFF_DIR GFORGE_DIR
 
 source "${VFF_DIR}/lib/core.sh"
