@@ -4,7 +4,7 @@ source "${VFF_DIR}/profiles/gentoo.sh"
 DISTRO_NAME="Gentoo Linux"
 DISTRO_ID="gentoo"
 VFF_BOOTLOADER_ID="Gentoo"
-VFF_REQUIRED_TOOLS="sgdisk parted partprobe mount lsblk wipefs mkfs.fat mkfs.ext4 jq"
+VFF_REQUIRED_TOOLS="sgdisk parted partprobe mount lsblk wipefs mkfs.fat mkfs.ext4"
 
 ESP_MOUNT="/efi"
 
