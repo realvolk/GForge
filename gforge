@@ -39,7 +39,6 @@ vff_preflight() {
     require_root
     detect_boot_mode
     require_internet
-    command -v jq >/dev/null || emerge --ask=n --oneshot app-misc/jq
     _require_tools ${VFF_REQUIRED_TOOLS:-}
     log_info "Preflight checks passed (boot mode: ${VFF_BOOT_MODE})"
 }
