@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+VFF_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/VFF"
+GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${VFF_DIR}/lib/core.sh"
+source "${VFF_DIR}/lib/state.sh"
+vff_source_all
+source "${GFORGE_DIR}/profiles/gentoo.sh"
+
+tui_title "GentooForge Rescue"
+tui_msg_quick "Rescue Mode" "Detecting existing Gentoo installations..."
+
+if ! recovery_mount_all; then
+    die "No Gentoo installation found or mount failed."
+fi
+
+tui_msg_quick "Mounted" "System mounted at /mnt"
+tui_msg_quick "Rescue Shell" "Dropping into chroot shell. Type 'exit' to return."
+pkg_chroot /bin/bash
+log_info "Rescue session ended."

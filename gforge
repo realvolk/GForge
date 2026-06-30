@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+VFF_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/VFF"
+GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+export VFF_DIR GFORGE_DIR
+
+source "${VFF_DIR}/lib/core.sh"
+source "${VFF_DIR}/lib/state.sh"
+vff_source_all
+source "${GFORGE_DIR}/profiles/gentoo.sh"
+source "${GFORGE_DIR}/lib/tui/gentoo.sh"
+source "${GFORGE_DIR}/lib/helpers/cpu-optimize.sh"
+source "${GFORGE_DIR}/lib/helpers/fetch-handbook.sh"
+source "${GFORGE_DIR}/lib/post/gentoo.sh"
+
+vff_preflight() {
+    require_root
+    detect_boot_mode
+    require_internet
+    check_disk_space 5 /mnt
+    _require_tools ${VFF_REQUIRED_TOOLS:-}
+    log_info "Preflight checks passed (boot mode: ${VFF_BOOT_MODE})"
+}
+
+gforge_welcome_art() {
+    tui_msg_quick "GentooForge by realvolk" "
+   __________________
+ < Gentoo Linux - live free >
+  ------------------
+         \\   ^__^
+          \\  (oo)\\_______
+             (__)\\       )\\/\\
+                 ||----w |
+                 ||     ||
+"
+}
+
+gforge_welcome_art
+vff_preflight
+pkg_repo_setup
+gforge_collect_config
+
+partition_disk
+create_filesystems
+mount_filesystems
+pkg_bootstrap
+pkg_install "${BASE_PACKAGES[@]}"
+configure_system
+configure_users
+gentoo_setup_network
+run_post_install
+configure_grub
+gentoo_post_install
+
+gforge_post_install_extras
+gforge_save_profile
+gforge_download_handbook
+gforge_show_log
+log_info "Gentoo installation complete. Reboot."

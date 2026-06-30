@@ -1,0 +1,7 @@
+[submodule "forge-tui"]
+	path = forge-tui
+	url = https://github.com/realvolk/forge-tui.git
+[submodule "VFF"]
+	path = VFF
+	url = https://github.com/realvolk/VFF.git
+	branch = vff-gentoo
