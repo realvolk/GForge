@@ -66,7 +66,9 @@ Inherited from VFF. Stage-based with full resume support.
 | USE flag defaults | Pre-selected recommended flags based on profile choice |
 | Desktop USE suggestions | Automatic flag recommendations per DE (GNOME, KDE, XFCE, i3) |
 | CFLAGS | Auto-detection with CPU-specific -march (-march=native, x86-64-v2/v3/v4, znver2/3/4) |
+| RUSTFLAGS | Auto-detection with CPU-specific optimization (-C target-cpu=native) |
 | MAKEOPTS | Auto-detected -j$(nproc) with override |
+| Per-package CFLAGS | Custom compiler flags for specific packages via /etc/portage/env/ and package.env |
 | CPU_FLAGS_X86 | Auto-detection via cpuid2cpuflags, written to package.use/00cpu-flags |
 | VIDEO_CARDS | GPU auto-detection with per-package settings in package.use/00video_cards |
 | EMERGE_DEFAULT_OPTS | --jobs, --load-average |
