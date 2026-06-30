@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 source "${VFF_DIR}/profiles/gentoo.sh"
-
+: "${VFF_BOOT_MODE:=uefi}"
 DISTRO_NAME="Gentoo Linux"
 DISTRO_ID="gentoo"
 VFF_BOOTLOADER_ID="Gentoo"
