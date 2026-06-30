@@ -31,7 +31,6 @@ source "${VFF_DIR}/lib/stage/pipeline.sh"
 source "${GFORGE_DIR}/profiles/gentoo.sh"
 source "${GFORGE_DIR}/lib/tui/gentoo.sh"
 source "${GFORGE_DIR}/lib/helpers/cpu-optimize.sh"
-source "${GFORGE_DIR}/lib/helpers/wiki.sh"
 source "${GFORGE_DIR}/lib/helpers/fetch-handbook.sh"
 source "${GFORGE_DIR}/lib/post/gentoo.sh"
 
