@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.0.3.0 (2026-06-30) — TUI Coherence & Multiselect Widget
+
+### Added
+- Daemon mode enabled for zero-flicker TUI (FORGE_TUI_DAEMON=1)
+- tui_multiselect wrapper for forge-tui's multiselect widget (fuzzy search + toggle)
+- Category-based main menu with submenus — user picks only what they want to configure
+- Current values shown in brackets on every menu item
+- Section headers between configuration groups for coherent user flow
+
+### Changed
+- gforge_collect_config restructured: disk/storage runs first, then main menu loop with submenus
+- USE flags, licenses, FEATURES, overlays, desktop extras, tool groups, OpenRC options, and service picker now use tui_multiselect (single widget, fuzzy search, Space to toggle)
+- Stage3 variant selector extracts values from paired arrays (fixes descriptions appearing as selectable options)
+- Bootloader timeout has default fallback and writes to /etc/default/grub
+- Portage profile selector uses tui_filter for large lists, tui_menu for small lists
+- All configuration pages accessible via drill-down submenus rather than linear questioning
+- Unconfigured options fall back to sensible defaults with no user prompting required
+
+### Fixed
+- LVM partition type change validates partition number before sgdisk call (fixes "!" error)
+- jq installed directly on live ISO during preflight (not through chroot)
+- Disk selector filters sr* and loop* devices
+- forge-tui binary path set explicitly via FORGE_TUI env var
+- Double-source of state.sh removed from gforge entrypoint
+
 ## v1.0.2.1 (2026-06-30) — VM GPU Detection
 
 ### Added

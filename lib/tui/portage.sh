@@ -7,7 +7,7 @@ gforge_accept_licenses() {
         "GPL-2" "GPL-3" "LGPL-2.1" "BSD" "MIT" "Apache-2.0"
     )
     local selected
-    selected=$(tui_checklist "Licenses" "Accept software licenses:" "${licenses[@]}") || true
+    selected=$(tui_multiselect "Licenses" "Type to search, Space to toggle:" "Search licenses..." 0 0 "${licenses[@]}") || true
     state_set ACCEPTED_LICENSES "${selected//$'\n'/ }"
     mkdir -p /mnt/etc/portage
     if [[ -f /mnt/etc/portage/make.conf ]]; then
@@ -18,6 +18,49 @@ gforge_accept_licenses() {
         fi
     else
         echo "ACCEPT_LICENSE=\"${selected//$'\n'/ }\"" >> /mnt/etc/portage/make.conf
+    fi
+}
+
+gforge_configure_emerge_defaults() {
+    if tui_yesno "EMERGE_DEFAULTS" "Configure emerge default options and features?"; then
+        local -a features=(
+            "ccache" "buildpkg" "parallel-install" "keep-going"
+            "userpriv" "quiet-build" "getbinpkg" "binpkg-request-signature"
+        )
+        local selected
+        selected=$(tui_multiselect "FEATURES" "Type to search, Space to toggle:" "Search features..." 0 0 "${features[@]}") || true
+        state_set EMERGE_FEATURES "${selected//$'\n'/ }"
+        local -a opts=("--jobs=4" "--load-average=8")
+        local opts_selected
+        opts_selected=$(tui_multiselect "EMERGE_DEFAULT_OPTS" "Type to search, Space to toggle:" "Search options..." 0 0 "${opts[@]}") || true
+        state_set EMERGE_DEFAULT_OPTS "${opts_selected//$'\n'/ }"
+
+        local features_str="${selected//$'\n'/ }"
+        if [[ -n "${features_str}" ]]; then
+            mkdir -p /mnt/etc/portage
+            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^FEATURES=" /mnt/etc/portage/make.conf 2>/dev/null; then
+                sed -i "s/^FEATURES=\"/FEATURES=\"${features_str} /" /mnt/etc/portage/make.conf
+            else
+                echo "FEATURES=\"${features_str}\"" >> /mnt/etc/portage/make.conf
+            fi
+        fi
+        local opts_str="${opts_selected//$'\n'/ }"
+        if [[ -n "${opts_str}" ]]; then
+            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^EMERGE_DEFAULT_OPTS=" /mnt/etc/portage/make.conf 2>/dev/null; then
+                sed -i "s/^EMERGE_DEFAULT_OPTS=\"/EMERGE_DEFAULT_OPTS=\"${opts_str} /" /mnt/etc/portage/make.conf
+            else
+                echo "EMERGE_DEFAULT_OPTS=\"${opts_str}\"" >> /mnt/etc/portage/make.conf
+            fi
+        fi
+
+        if [[ "${selected}" =~ "ccache" ]]; then
+            if tui_yesno "ccache size" "Set ccache cache size? (default 5G)"; then
+                local size
+                size=$(tui_input "ccache size" "Enter size (e.g. 10G):" "5G")
+                state_set CCACHE_SIZE "${size}"
+                echo "CCACHE_SIZE=\"${size}\"" >> /mnt/etc/portage/make.conf
+            fi
+        fi
     fi
 }
 
@@ -46,53 +89,9 @@ gforge_detect_x86_64_v3() {
     return 1
 }
 
-gforge_configure_emerge_defaults() {
-    if tui_yesno "EMERGE_DEFAULTS" "Configure emerge default options and features?"; then
-        local -a features=(
-            "ccache" "buildpkg" "parallel-install" "keep-going" "userpriv" "quiet-build" "getbinpkg" "binpkg-request-signature"
-        )
-        local selected
-        selected=$(tui_checklist "FEATURES" "Select FEATURES to enable:" "${features[@]}") || true
-        state_set EMERGE_FEATURES "${selected//$'\n'/ }"
-        local -a opts=(
-            "--jobs=4" "--load-average=8"
-        )
-        local opts_selected
-        opts_selected=$(tui_checklist "EMERGE_DEFAULT_OPTS" "Select default emerge options:" "${opts[@]}") || true
-        state_set EMERGE_DEFAULT_OPTS "${opts_selected//$'\n'/ }"
-
-        mkdir -p /mnt/etc/portage
-        local features_str="${selected//$'\n'/ }"
-        if [[ -n "${features_str}" ]]; then
-            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^FEATURES=" /mnt/etc/portage/make.conf 2>/dev/null; then
-                sed -i "s/^FEATURES=\"/FEATURES=\"${features_str} /" /mnt/etc/portage/make.conf
-            else
-                echo "FEATURES=\"${features_str}\"" >> /mnt/etc/portage/make.conf
-            fi
-        fi
-        local opts_str="${opts_selected//$'\n'/ }"
-        if [[ -n "${opts_str}" ]]; then
-            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^EMERGE_DEFAULT_OPTS=" /mnt/etc/portage/make.conf 2>/dev/null; then
-                sed -i "s/^EMERGE_DEFAULT_OPTS=\"/EMERGE_DEFAULT_OPTS=\"${opts_str} /" /mnt/etc/portage/make.conf
-            else
-                echo "EMERGE_DEFAULT_OPTS=\"${opts_str}\"" >> /mnt/etc/portage/make.conf
-            fi
-        fi
-
-        if [[ "${selected}" =~ "ccache" ]]; then
-            if tui_yesno "ccache size" "Set ccache cache size? (default 5G)"; then
-                local size
-                size=$(tui_input "ccache size" "Enter size (e.g. 10G):" "5G")
-                state_set CCACHE_SIZE "${size}"
-                echo "CCACHE_SIZE=\"${size}\"" >> /mnt/etc/portage/make.conf
-            fi
-        fi
-    fi
-}
-
 gforge_configure_sync_type() {
     local sync
-    sync=$(tui_menu "Portage Sync" "Sync method:" "rsync (default)" "git") || sync="rsync"
+    sync=$(tui_menu "Portage Sync" "Sync method:" "rsync" "git") || sync="rsync"
     state_set PORTAGE_SYNC_TYPE "${sync%% *}"
 }
 
@@ -115,7 +114,7 @@ gforge_configure_mirrors() {
 gforge_configure_accept_keywords() {
     if tui_yesno "ACCEPT_KEYWORDS" "Use testing (~amd64) globally or per-package?"; then
         local scope
-        scope=$(tui_menu "Testing scope" "Apply to:" "Global (~amd64)" "Per-package") || scope="Global"
+        scope=$(tui_menu "Testing scope" "Apply to:" "Global" "Per-package") || scope="Global"
         if [[ "$scope" == "Global"* ]]; then
             state_set ACCEPT_KEYWORDS_GLOBAL "~amd64"
             mkdir -p /mnt/etc/portage
@@ -167,7 +166,7 @@ gforge_configure_video_cards() {
         fi
         return 0
     fi
-    
+
     if tui_yesno "VIDEO_CARDS" "Configure VIDEO_CARDS for detected GPU ($gpu)?"; then
         local driver=""
         local use_flags=""

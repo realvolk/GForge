@@ -3,8 +3,10 @@ set -Eeuo pipefail
 
 VFF_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/VFF"
 GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-export FORGE_TUI="${GFORGE_DIR}/forge-tui/target/release/forge-tui"
+
 export VFF_DIR GFORGE_DIR
+export FORGE_TUI="${GFORGE_DIR}/forge-tui/target/release/forge-tui"
+export FORGE_TUI_DAEMON=1
 
 source "${VFF_DIR}/lib/core.sh"
 source "${VFF_DIR}/lib/state.sh"
@@ -38,7 +40,6 @@ vff_preflight() {
     require_root
     detect_boot_mode
     require_internet
-    # jq is needed by forge-tui on the live ISO
     if ! command -v jq >/dev/null; then
         log_info "Installing jq on live environment..."
         emerge --ask=n --oneshot app-misc/jq || die "Failed to install jq"

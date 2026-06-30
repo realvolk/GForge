@@ -12,33 +12,27 @@ gforge_select_profile() {
         log_warn "No Portage profiles found. Skipping."
         return 0
     fi
-    local -a menu_items=()
+
     local -a profile_paths=()
     while IFS= read -r line; do
-        local index path stability
-        index=$(echo "${line}" | grep -oP '^\s*\[\K[0-9]+' || true)
+        local path
         path=$(echo "${line}" | grep -oP '\]\s+\K\S+' || true)
-        stability="stable"
-        [[ "${path}" == *"/exp/"* ]] && stability="exp"
-        [[ "${path}" == *"/dev/"* ]] && stability="dev"
-        if [[ -n "${index}" && -n "${path}" ]]; then
-            profile_paths+=("${path}")
-            menu_items+=("${path}|${stability}")
-        fi
+        [[ -n "${path}" ]] && profile_paths+=("${path}")
     done <<< "${profiles_raw}"
+
     if [[ ${#profile_paths[@]} -eq 0 ]]; then
         log_warn "Could not parse profile list."
         return 0
     fi
-    local menu_json
-    menu_json=$(for i in "${!menu_items[@]}"; do
-        local label="${menu_items[$i]%%|*}"
-        local stab="${menu_items[$i]##*|}"
-        printf '{"label":"%s","stability":"%s"}\n' "${label}" "${stab}"
-    done | jq -s .)
-    local stability_colors='{"stable":"green","dev":"yellow","exp":"red"}'
-    selected=$(_forge_result '{"widget":"menu","title":"Portage Profile","message":"Select system profile:","choices":'"${menu_json}"',"stability_colors":'"${stability_colors}"'}')
+
+    local selected
+    if [[ ${#profile_paths[@]} -gt 15 ]]; then
+        selected=$(printf '%s\n' "${profile_paths[@]}" | tui_filter "Portage Profile" "Type to search profiles:" --placeholder "default/linux/amd64/...") || true
+    else
+        selected=$(tui_menu "Portage Profile" "Select system profile:" "${profile_paths[@]}") || true
+    fi
     selected="${selected:-${profile_paths[0]}}"
+
     state_set PORTAGE_PROFILE "${selected}"
     log_info "Profile selected: ${selected}"
 

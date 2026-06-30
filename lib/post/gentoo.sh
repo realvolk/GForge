@@ -28,7 +28,7 @@ gforge_service_picker() {
     esac
     [[ ${#available[@]} -gt 0 ]] || return 0
     local sel
-    sel=$(tui_checklist "Boot Services" "Enable:" "${available[@]}") || true
+    sel=$(tui_multiselect "Boot Services" "Type to search, Space to toggle:" "Search services..." 0 0 "${available[@]}") || true
     for s in ${sel}; do
         case "${init}" in
             openrc) pkg_chroot rc-update add "${s}" default ;;
@@ -113,7 +113,6 @@ gforge_post_install_extras() {
     fi
 
     [[ -x /mnt/usr/bin/updatedb ]] && pkg_chroot updatedb &
-
     log_info "Merging configuration file changes..."
     pkg_chroot dispatch-conf
 

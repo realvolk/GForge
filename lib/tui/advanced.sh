@@ -1,6 +1,49 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+gforge_configure_desktop_extras() {
+    local wm="${WM_DE:-none}"
+    if [[ "${wm}" != "none" ]]; then
+        if tui_yesno "Desktop Extras" "Configure additional desktop features?"; then
+            local -a extras_list=(
+                "Vulkan drivers" "Printer support (cups)" "Bluetooth"
+                "Power management (tlp)" "SSD TRIM (fstrim)"
+                "NetworkManager applet" "Fonts (noto/dejavu)"
+                "Input method (ibus/fcitx)"
+            )
+            local extras
+            extras=$(tui_multiselect "Desktop Extras" "Type to search, Space to toggle:" "Search extras..." 0 0 "${extras_list[@]}") || true
+            if [[ "${extras}" =~ "Vulkan" ]]; then state_set INSTALL_VULKAN "yes"; fi
+            if [[ "${extras}" =~ "Printer" ]]; then state_set INSTALL_PRINTER "yes"; fi
+            if [[ "${extras}" =~ "Bluetooth" ]]; then state_set INSTALL_BLUETOOTH "yes"; fi
+            if [[ "${extras}" =~ "Power management" ]]; then state_set INSTALL_TLP "yes"; fi
+            if [[ "${extras}" =~ "SSD TRIM" ]]; then state_set ENABLE_TRIM "yes"; fi
+            if [[ "${extras}" =~ "NetworkManager applet" ]]; then state_set INSTALL_NM_APPLET "yes"; fi
+            if [[ "${extras}" =~ "Fonts" ]]; then state_set INSTALL_FONTS "yes"; fi
+            if [[ "${extras}" =~ "Input method" ]]; then
+                local im
+                im=$(tui_menu "Input Method" "Select:" "ibus" "fcitx") || im="ibus"
+                state_set INPUT_METHOD "${im}"
+            fi
+        fi
+    fi
+}
+
+gforge_configure_tool_groups() {
+    if tui_yesno "Additional Tools" "Select optional tool groups?"; then
+        local -a groups=(
+            "Virtualization (libvirt/qemu)" "Containers (docker/podman)"
+            "Development (gcc/make/gdb)" "Gaming (steam/wine)"
+        )
+        local selected
+        selected=$(tui_multiselect "Tool Groups" "Type to search, Space to toggle:" "Search groups..." 0 0 "${groups[@]}") || true
+        if [[ "${selected}" =~ "Virtualization" ]]; then state_set INSTALL_VIRT "yes"; fi
+        if [[ "${selected}" =~ "Containers" ]]; then state_set INSTALL_CONTAINERS "yes"; fi
+        if [[ "${selected}" =~ "Development" ]]; then state_set INSTALL_DEVTOOLS "yes"; fi
+        if [[ "${selected}" =~ "Gaming" ]]; then state_set INSTALL_GAMING "yes"; fi
+    fi
+}
+
 gforge_configure_firewall() {
     if tui_yesno "Firewall" "Install and enable a firewall?"; then
         local fw
@@ -99,9 +142,7 @@ gforge_configure_btrfs_layout_descriptions() {
     if [[ "$(state_get FS_TYPE)" == "btrfs" ]]; then
         local layout
         layout=$(tui_menu "BTRFS Layout" "Choose subvolume layout:" \
-            "standard (@, @home)" \
-            "flat (single subvolume)" \
-            "snapshot (@, @home, @log, @pkg, @snapshots)") || layout="standard"
+            "standard" "flat" "snapshot") || layout="standard"
         case "${layout}" in
             standard*) state_set BTRFS_LAYOUT "standard" ;;
             flat*)     state_set BTRFS_LAYOUT "flat" ;;
@@ -116,7 +157,6 @@ gforge_configure_estimated_time() {
     if [[ "${kernel}" =~ source ]]; then src_count=$((src_count + 1)); fi
     local wm="${WM_DE:-none}"
     if [[ "${wm}" != "none" ]]; then src_count=$((src_count + 1)); fi
-    # rough heuristic
     local cores=$(nproc)
     local minutes=$((src_count * 120 / cores))
     tui_msg_quick "Estimated Build Time" "Rough estimate: ${minutes} minutes for source packages."
@@ -137,8 +177,9 @@ gforge_detect_wifi_live() {
 gforge_configure_openrc_tuning() {
     if [[ "$(state_get INIT)" == "openrc" ]]; then
         if tui_yesno "OpenRC tuning" "Configure OpenRC parallel/hotplug?"; then
+            local -a opts=("rc_parallel=YES" "rc_hotplug=YES")
             local choices
-            choices=$(tui_checklist "OpenRC Options" "Select:" "rc_parallel=YES" "rc_hotplug=YES") || true
+            choices=$(tui_multiselect "OpenRC Options" "Type to search, Space to toggle:" "Search options..." 0 0 "${opts[@]}") || true
             if [[ -n "${choices}" ]]; then
                 state_set OPENRC_OPTIONS "${choices//$'\n'/ }"
             fi
@@ -161,20 +202,5 @@ gforge_configure_auto_login() {
         if tui_yesno "Auto-login" "Enable auto-login for first boot?"; then
             state_set AUTO_LOGIN "yes"
         fi
-    fi
-}
-
-gforge_configure_tool_groups() {
-    if tui_yesno "Additional Tools" "Select optional tool groups?"; then
-        local groups
-        groups=$(tui_checklist "Tool Groups" "Select:" \
-            "Virtualization (libvirt/qemu)" \
-            "Containers (docker/podman)" \
-            "Development (gcc/make/gdb)" \
-            "Gaming (steam/wine)") || true
-        if [[ "${groups}" =~ "Virtualization" ]]; then state_set INSTALL_VIRT "yes"; fi
-        if [[ "${groups}" =~ "Containers" ]]; then state_set INSTALL_CONTAINERS "yes"; fi
-        if [[ "${groups}" =~ "Development" ]]; then state_set INSTALL_DEVTOOLS "yes"; fi
-        if [[ "${groups}" =~ "Gaming" ]]; then state_set INSTALL_GAMING "yes"; fi
     fi
 }
