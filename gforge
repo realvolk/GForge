@@ -7,7 +7,6 @@ GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 export VFF_DIR GFORGE_DIR
 
 source "${VFF_DIR}/lib/core.sh"
-source "${VFF_DIR}/lib/state.sh"
 vff_source_all
 source "${GFORGE_DIR}/profiles/gentoo.sh"
 source "${GFORGE_DIR}/lib/tui/gentoo.sh"
