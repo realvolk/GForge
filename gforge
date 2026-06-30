@@ -39,6 +39,7 @@ source "${GFORGE_DIR}/lib/post/gentoo.sh"
 
 vff_preflight() {
     require_root
+    command -v jq >/dev/null || emerge --ask=n --oneshot app-misc/jq
     detect_boot_mode
     require_internet
     _require_tools ${VFF_REQUIRED_TOOLS:-}
