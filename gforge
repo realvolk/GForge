@@ -6,6 +6,7 @@ GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 export VFF_DIR GFORGE_DIR
 export FORGE_TUI="${GFORGE_DIR}/forge-tui/target/release/forge-tui"
+export FORGE_TUI_SOCKET="${FORGE_TUI_SOCKET:-/tmp/forge-tui.sock}"
 export FORGE_TUI_DAEMON=1
 
 source "${VFF_DIR}/lib/core.sh"
