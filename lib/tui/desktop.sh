@@ -7,6 +7,12 @@ gforge_desktop_use_suggestions() {
     if [[ -n "${suggestions}" ]]; then
         tui_msg_quick "USE Suggestions" "Recommended USE flags for ${wm_de}: ${suggestions}"
         state_set DESKTOP_USE_FLAGS "${suggestions}"
+        mkdir -p /mnt/etc/portage
+        if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^USE=" /mnt/etc/portage/make.conf 2>/dev/null; then
+            sed -i "s/^USE=\"/USE=\"${suggestions} /" /mnt/etc/portage/make.conf
+        else
+            echo "USE=\"${suggestions}\"" >> /mnt/etc/portage/make.conf
+        fi
     fi
 }
 

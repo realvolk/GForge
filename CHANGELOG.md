@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.0.2.0 (2026-06-30) — Pre-Install Flag Fixes & Base System
+
+### Added
+- sof-firmware, mlocate, io-scheduler-udev-rules, xfsprogs, e2fsprogs, dosfstools in base packages
+- chrony time sync pre-installed and enabled
+- dispatch-conf run before reboot
+- Optional emerge --depclean before reboot
+- resolve-march-native support for exact CPU detection in CFLAGS
+- CFLAGS/CXXFLAGS/MAKEOPTS written to make.conf during pre-install config
+- Per-package CFLAGS helper via /etc/portage/env/ and package.env
+- Desktop USE flag suggestions auto-applied to make.conf during pre-install
+
+### Changed
+- GRUB_PLATFORMS="efi-64" now set during pre-install config, before packages are emerged
+- GPU USE flags and VIDEO_CARDS written to make.conf and package.use during pre-install
+- GPU-specific USE flags auto-set when VIDEO_CARDS is configured
+- RUSTFLAGS written to make.conf during pre-install, not post-install; simplified to -C target-cpu=native
+- ACCEPT_LICENSE written to make.conf immediately during pre-install
+- FEATURES and EMERGE_DEFAULT_OPTS written to make.conf immediately during pre-install
+- ACCEPT_KEYWORDS written to make.conf immediately during pre-install
+- GENTOO_MIRRORS written to make.conf immediately during pre-install
+- Telemetry mask written to /etc/portage/package.mask immediately during pre-install
+- All Portage configuration now applied before any packages are compiled
+
 ## v1.0.1.0 (2026-06-30) — Rust Flags & Per-Package CFLAGS
 
 ### Added

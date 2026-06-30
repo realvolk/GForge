@@ -9,6 +9,16 @@ gforge_accept_licenses() {
     local selected
     selected=$(tui_checklist "Licenses" "Accept software licenses:" "${licenses[@]}") || true
     state_set ACCEPTED_LICENSES "${selected//$'\n'/ }"
+    mkdir -p /mnt/etc/portage
+    if [[ -f /mnt/etc/portage/make.conf ]]; then
+        if grep -q "^ACCEPT_LICENSE=" /mnt/etc/portage/make.conf 2>/dev/null; then
+            sed -i "s/^ACCEPT_LICENSE=.*/ACCEPT_LICENSE=\"${selected//$'\n'/ }\"/" /mnt/etc/portage/make.conf
+        else
+            echo "ACCEPT_LICENSE=\"${selected//$'\n'/ }\"" >> /mnt/etc/portage/make.conf
+        fi
+    else
+        echo "ACCEPT_LICENSE=\"${selected//$'\n'/ }\"" >> /mnt/etc/portage/make.conf
+    fi
 }
 
 gforge_configure_binhost() {
@@ -24,7 +34,6 @@ gforge_configure_binhost() {
         binhost_url=$(tui_input "Binhost URL" "Enter binhost URL:" "${binhost_url}")
         state_set BINHOST_URL "${binhost_url}"
         if gforge_detect_x86_64_v3 && [[ "${binhost_url}" == *"x86-64-v3"* ]]; then
-            tui_msg_quick "Two binhosts" "Both base and v3 binhosts will be configured for fallback."
             state_set USE_DUAL_BINHOST "yes"
         fi
     else
@@ -51,11 +60,31 @@ gforge_configure_emerge_defaults() {
         local opts_selected
         opts_selected=$(tui_checklist "EMERGE_DEFAULT_OPTS" "Select default emerge options:" "${opts[@]}") || true
         state_set EMERGE_DEFAULT_OPTS "${opts_selected//$'\n'/ }"
+
+        mkdir -p /mnt/etc/portage
+        local features_str="${selected//$'\n'/ }"
+        if [[ -n "${features_str}" ]]; then
+            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^FEATURES=" /mnt/etc/portage/make.conf 2>/dev/null; then
+                sed -i "s/^FEATURES=\"/FEATURES=\"${features_str} /" /mnt/etc/portage/make.conf
+            else
+                echo "FEATURES=\"${features_str}\"" >> /mnt/etc/portage/make.conf
+            fi
+        fi
+        local opts_str="${opts_selected//$'\n'/ }"
+        if [[ -n "${opts_str}" ]]; then
+            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^EMERGE_DEFAULT_OPTS=" /mnt/etc/portage/make.conf 2>/dev/null; then
+                sed -i "s/^EMERGE_DEFAULT_OPTS=\"/EMERGE_DEFAULT_OPTS=\"${opts_str} /" /mnt/etc/portage/make.conf
+            else
+                echo "EMERGE_DEFAULT_OPTS=\"${opts_str}\"" >> /mnt/etc/portage/make.conf
+            fi
+        fi
+
         if [[ "${selected}" =~ "ccache" ]]; then
             if tui_yesno "ccache size" "Set ccache cache size? (default 5G)"; then
                 local size
                 size=$(tui_input "ccache size" "Enter size (e.g. 10G):" "5G")
                 state_set CCACHE_SIZE "${size}"
+                echo "CCACHE_SIZE=\"${size}\"" >> /mnt/etc/portage/make.conf
             fi
         fi
     fi
@@ -70,12 +99,15 @@ gforge_configure_sync_type() {
 gforge_configure_mirrors() {
     if tui_yesno "GENTOO_MIRRORS" "Select download mirrors?"; then
         if command -v mirrorselect &>/dev/null; then
+            mkdir -p /mnt/etc/portage
             mirrorselect -i -o >> /mnt/etc/portage/make.conf 2>/dev/null || true
         else
             local mirrors="https://gentoo.osuosl.org/ https://mirror.leaseweb.com/gentoo/"
             local custom
             custom=$(tui_input "Mirror URL" "Enter mirror URL (space separated):" "${mirrors}")
             state_set GENTOO_MIRRORS "${custom:-${mirrors}}"
+            mkdir -p /mnt/etc/portage
+            echo "GENTOO_MIRRORS=\"${custom:-${mirrors}}\"" >> /mnt/etc/portage/make.conf
         fi
     fi
 }
@@ -86,6 +118,12 @@ gforge_configure_accept_keywords() {
         scope=$(tui_menu "Testing scope" "Apply to:" "Global (~amd64)" "Per-package") || scope="Global"
         if [[ "$scope" == "Global"* ]]; then
             state_set ACCEPT_KEYWORDS_GLOBAL "~amd64"
+            mkdir -p /mnt/etc/portage
+            if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^ACCEPT_KEYWORDS=" /mnt/etc/portage/make.conf 2>/dev/null; then
+                sed -i "s/^ACCEPT_KEYWORDS=.*/ACCEPT_KEYWORDS=\"~amd64\"/" /mnt/etc/portage/make.conf
+            else
+                echo 'ACCEPT_KEYWORDS="~amd64"' >> /mnt/etc/portage/make.conf
+            fi
         fi
     fi
 }
@@ -93,28 +131,53 @@ gforge_configure_accept_keywords() {
 gforge_configure_telemetry() {
     if tui_yesno "Telemetry" "Mask Gentoo telemetry package (dev-libs/telemetry)?"; then
         state_set MASK_TELEMETRY "yes"
+        mkdir -p /mnt/etc/portage
+        echo "dev-libs/telemetry" >> /mnt/etc/portage/package.mask
     fi
 }
 
 gforge_configure_video_cards() {
     local gpu
     gpu=$(get_gpu_vendor)
-    if tui_yesno "VIDEO_CARDS" "Configure VIDEO_CARDS for detected GPU?"; then
+    if tui_yesno "VIDEO_CARDS" "Configure VIDEO_CARDS for detected GPU ($gpu)?"; then
         local driver=""
+        local use_flags=""
         case "${gpu}" in
             nvidia)
                 if [[ "$(state_get NVIDIA_PROPRIETARY)" == "yes" ]]; then
                     driver="nvidia"
+                    use_flags="-intel -radeon -nouveau nvidia"
                 else
                     driver="nouveau"
+                    use_flags="-intel -radeon -nvidia nouveau"
                 fi
                 ;;
-            intel) driver="intel" ;;
-            amd)   driver="amdgpu radeonsi" ;;
-            *)     driver="vesa" ;;
+            intel)
+                driver="intel"
+                use_flags="-nouveau -nvidia -radeon intel"
+                ;;
+            amd)
+                driver="amdgpu radeonsi"
+                use_flags="-intel -nouveau -nvidia radeon"
+                ;;
+            *)
+                driver="vesa"
+                use_flags="-intel -nouveau -nvidia -radeon"
+                ;;
         esac
         local custom
         custom=$(tui_input "VIDEO_CARDS" "Enter VIDEO_CARDS value:" "${driver}")
         state_set VIDEO_CARDS "${custom:-${driver}}"
+        state_set GPU_USE_FLAGS "${use_flags}"
+        tui_msg_quick "GPU USE Flags" "Setting: ${use_flags}"
+
+        mkdir -p /mnt/etc/portage/package.use
+        echo "*/* VIDEO_CARDS: -* ${custom:-${driver}}" > /mnt/etc/portage/package.use/00video_cards
+        mkdir -p /mnt/etc/portage
+        if [[ -f /mnt/etc/portage/make.conf ]] && grep -q "^USE=" /mnt/etc/portage/make.conf 2>/dev/null; then
+            sed -i "s/^USE=\"/USE=\"${use_flags} /" /mnt/etc/portage/make.conf
+        else
+            echo "USE=\"${use_flags}\"" >> /mnt/etc/portage/make.conf
+        fi
     fi
 }

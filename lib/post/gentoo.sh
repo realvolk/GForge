@@ -21,8 +21,6 @@ gforge_service_picker() {
             for svc in /mnt/etc/init.d/*; do
                 [[ -x "${svc}" ]] && available+=("$(basename "${svc}")")
             done
-            pkg_chroot rc-update add cronie default
-            pkg_chroot rc-update add sysklogd default
             ;;
         systemd)
             available=("sshd" "cronie" "dbus" "display-manager")
@@ -44,9 +42,7 @@ gforge_post_install_extras() {
     local dm init
     dm="$(state_get DISPLAY_MANAGER none)"
     init="$(state_get INIT openrc)"
-    if [[ "${VFF_BOOT_MODE}" != "bios" ]]; then
-        echo 'GRUB_PLATFORMS="efi-64"' >> /mnt/etc/portage/make.conf
-    fi
+
     if [[ "$(state_get USE_INSTALLKERNEL)" == "yes" ]]; then
         local use_flags="$(state_get INSTALLKERNEL_USE)"
         mkdir -p /mnt/etc/portage/package.use
@@ -56,6 +52,9 @@ gforge_post_install_extras() {
     if [[ "$(state_get ENABLE_OS_PROBER)" == "yes" ]]; then
         pkg_install sys-boot/os-prober
         echo 'GRUB_DISABLE_OS_PROBER=false' >> /mnt/etc/default/grub
+        mkdir -p /mnt/run/udev
+        mount -o bind /run/udev /mnt/run/udev 2>/dev/null || true
+        mount --make-rslave /mnt/run/udev 2>/dev/null || true
     fi
     if [[ "${init}" == "systemd" ]]; then
         pkg_chroot systemd-machine-id-setup
@@ -100,7 +99,6 @@ gforge_post_install_extras() {
     [[ "$(state_get TMPFS_TMP)" == "yes" ]] && echo "tmpfs /tmp tmpfs defaults,noatime 0 0" >> /mnt/etc/fstab
     [[ "$(state_get GRUB_THEME)" == "yes" ]] && pkg_install sys-boot/grub-theme
     [[ -n "$(state_get MICROCODE_PACKAGE)" ]] && pkg_install "$(state_get MICROCODE_PACKAGE)"
-    [[ "$(state_get MASK_TELEMETRY)" == "yes" ]] && echo "dev-libs/telemetry" >> /mnt/etc/portage/package.mask
     [[ "$(state_get USE_ECRYPTFS)" == "yes" ]] && { pkg_install sys-fs/ecryptfs-utils; pkg_chroot ecryptfs-migrate-home -u "$(state_get USER_NAME)" 2>/dev/null || true; }
     [[ -n "$(state_get BLACKLIST_MODULES)" ]] && { for mod in $(state_get BLACKLIST_MODULES); do echo "blacklist ${mod}" >> /mnt/etc/modprobe.d/blacklist.conf; done; }
     [[ "$(state_get REBUILD_WORLD)" == "yes" ]] && { log_info "Starting emerge -e @world..."; pkg_chroot emerge -e @world; }
@@ -114,8 +112,17 @@ gforge_post_install_extras() {
         esac
     fi
 
-    if [[ -n "$(state_get GENTOO_RUSTFLAGS)" ]]; then
-        echo "RUSTFLAGS=\"$(state_get GENTOO_RUSTFLAGS)\"" >> /mnt/etc/portage/make.conf
+    [[ -x /mnt/usr/bin/updatedb ]] && pkg_chroot updatedb &
+
+    log_info "Merging configuration file changes..."
+    pkg_chroot dispatch-conf
+
+    if tui_yesno "Depclean" "Remove unnecessary packages before reboot?"; then
+        pkg_chroot emerge --depclean
+    fi
+
+    if [[ "$(state_get ENABLE_OS_PROBER)" == "yes" ]]; then
+        umount /mnt/run/udev 2>/dev/null || true
     fi
 
     gforge_dump_emerge_info
@@ -138,7 +145,7 @@ gforge_write_first_boot_checklist() {
         echo "Hostname: $(state_get HOSTNAME)"
         echo "Network: $(state_get NETWORK_STACK)"
         echo "Init system: $(state_get INIT)"
-        echo "Services enabled: cronie sysklogd $(state_get ENABLE_SSHD && echo sshd)"
+        echo "Services enabled: cronie sysklogd chronyd $(state_get ENABLE_SSHD && echo sshd)"
         echo "Display manager: $(state_get DISPLAY_MANAGER)"
         echo "Desktop: $(state_get WM_DE)"
         echo ""

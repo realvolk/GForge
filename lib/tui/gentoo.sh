@@ -21,9 +21,19 @@ gforge_collect_config() {
         fi
     fi
     vff_collect_config
+
+    if [[ "${VFF_BOOT_MODE}" != "bios" ]]; then
+        mkdir -p /mnt/etc/portage
+        if ! grep -q 'GRUB_PLATFORMS' /mnt/etc/portage/make.conf 2>/dev/null; then
+            echo 'GRUB_PLATFORMS="efi-64"' >> /mnt/etc/portage/make.conf
+        fi
+    fi
+
     gforge_select_stage3
     gforge_select_profile
     gforge_configure_cflags
+    gforge_configure_rustflags
+    gforge_configure_per_package_cflags
     gforge_configure_use_flags
     gforge_configure_video_cards
     gforge_configure_kernel

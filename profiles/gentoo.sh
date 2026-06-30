@@ -115,11 +115,31 @@ DESKTOP_USE_SUGGESTIONS=(
     ["i3"]="gtk -kde -qt5 -qt6 -gnome X"
 )
 
+BASE_PACKAGES+=(
+    sys-process/cronie
+    app-admin/sysklogd
+    app-portage/gentoolkit
+    sys-firmware/sof-firmware
+    sys-apps/mlocate
+    sys-block/io-scheduler-udev-rules
+    sys-fs/xfsprogs
+    sys-fs/e2fsprogs
+    sys-fs/dosfstools
+)
+
 gentoo_post_install() {
     log_info "Running Gentoo post-install hooks..."
     pkg_chroot emerge --sync
     pkg_chroot eselect news read new
     pkg_chroot getuto
+    if [[ "$(state_get INSTALL_EIX)" == "yes" ]]; then
+        pkg_install app-portage/eix
+        pkg_chroot eix-update
+    fi
+
+    pkg_install net-misc/chrony
+    enable_service chronyd
+
     gforge_show_news
     gforge_service_picker
 
