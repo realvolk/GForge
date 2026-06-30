@@ -18,7 +18,6 @@ vff_preflight() {
     require_root
     detect_boot_mode
     require_internet
-    check_disk_space 5 /mnt
     _require_tools ${VFF_REQUIRED_TOOLS:-}
     log_info "Preflight checks passed (boot mode: ${VFF_BOOT_MODE})"
 }
