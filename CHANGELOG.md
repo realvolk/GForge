@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.1.0 (2026-06-30) — Rust Flags & Per-Package CFLAGS
+
+### Added
+- RUSTFLAGS configuration with CPU-specific optimization (-C target-cpu=native)
+- Per-package CFLAGS helper with Chisel editor for /etc/portage/env/ and package.env
+- RUSTFLAGS written to /etc/portage/make.conf during post-install
+
+### Changed
+- gforge_collect_config() now includes RUSTFLAGS and per-package CFLAGS after CFLAGS/MAKEOPTS configuration
+
 ## v1.0.0.0 (2026-06-30) — Initial Release
 
 ### Added

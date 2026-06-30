@@ -114,6 +114,10 @@ gforge_post_install_extras() {
         esac
     fi
 
+    if [[ -n "$(state_get GENTOO_RUSTFLAGS)" ]]; then
+        echo "RUSTFLAGS=\"$(state_get GENTOO_RUSTFLAGS)\"" >> /mnt/etc/portage/make.conf
+    fi
+
     gforge_dump_emerge_info
     gforge_write_first_boot_checklist
 }

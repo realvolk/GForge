@@ -23,3 +23,22 @@ gforge_configure_cflags() {
         fi
     fi
 }
+
+gforge_configure_rustflags() {
+    if tui_yesno "RUSTFLAGS" "Configure Rust compiler flags for CPU optimization?"; then
+        local suggested_rustflags="-C target-cpu=native"
+        local rustflags
+        rustflags=$(tui_input "RUSTFLAGS" "Rust compiler flags.\n\nSuggested: ${suggested_rustflags}\n\nTo see supported CPUs: rustc -C target-cpu=help" "${suggested_rustflags}")
+        state_set GENTOO_RUSTFLAGS "${rustflags:-${suggested_rustflags}}"
+    fi
+}
+
+gforge_configure_per_package_cflags() {
+    if tui_yesno "Per-Package CFLAGS" "Set custom compiler flags for specific packages?\n\nRecommended for GCC 16+ and specific CPU-optimized packages."; then
+        tui_msg_quick "Per-Package CFLAGS" "You can set package-specific CFLAGS in /etc/portage/env/ and reference them via /etc/portage/package.env"
+        if tui_yesno "Edit now" "Open the Chisel editor to configure?"; then
+            mkdir -p /mnt/etc/portage/env
+            tui_edit "Package env" "/mnt/etc/portage/env/custom-cflags"
+        fi
+    fi
+}
