@@ -4,10 +4,10 @@ set -Eeuo pipefail
 gforge_quick_profile_menu() {
     local choice
     choice=$(tui_menu "Quick Profile" "Start with a pre-configured setup or configure everything manually:" \
-        "Desktop"  "GNOME, PipeWire, NetworkManager, Firefox, Neovim, Flatpak" \
-        "Server"   "Headless, OpenRC, SSH, cronie, firewalld" \
-        "Minimal"  "Stage3 + essentials only" \
-        "Custom"   "Full manual configuration – every option, your choices") || choice="Custom"
+        "Desktop" \
+        "Server" \
+        "Minimal" \
+        "Custom") || choice="Custom"
 
     case "${choice}" in
         Desktop)
