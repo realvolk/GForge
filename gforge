@@ -6,8 +6,6 @@ GFORGE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 export VFF_DIR GFORGE_DIR
 
-command -v jq >/dev/null || { echo "jq is required. Install with: emerge app-misc/jq"; exit 1; }
-
 source "${VFF_DIR}/lib/core.sh"
 source "${VFF_DIR}/lib/state.sh"
 
