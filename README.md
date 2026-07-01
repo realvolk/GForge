@@ -9,7 +9,7 @@ Provides a guided TUI for Stage3 selection, Portage profile configuration, USE f
 ## Quick Start
 
 ```bash
-git clone --recursive https://github.com/realvolk/GentooForge.git
+git clone --recursive https://github.com/realvolk/GForge.git
 cd gforge/
 chmod +x gforge
 sudo ./gforge
