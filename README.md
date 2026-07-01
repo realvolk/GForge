@@ -371,3 +371,7 @@ Rust TUI library (`ratatui` + `crossterm`) with Chisel editor.
 Licensed under the **Forge Attribution License 1.0**
 
 See [LICENSE](LICENSE)
+
+## Contributions
+
+https://github.com/Oflucoder - fixing the naming problems inside GForge's wrapper file and profiles
