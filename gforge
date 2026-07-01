@@ -45,7 +45,6 @@ vff_preflight() {
         log_info "Installing jq on live environment..."
         emerge --ask=n --oneshot app-misc/jq || die "Failed to install jq"
     fi
-    _require_tools ${VFF_REQUIRED_TOOLS:-}
     log_info "Preflight checks passed (boot mode: ${VFF_BOOT_MODE})"
 }
 
