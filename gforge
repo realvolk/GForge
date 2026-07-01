@@ -41,10 +41,6 @@ vff_preflight() {
     require_root
     detect_boot_mode
     require_internet
-    if ! command -v jq >/dev/null; then
-        log_info "Installing jq on live environment..."
-        emerge --ask=n --oneshot app-misc/jq || die "Failed to install jq"
-    fi
     log_info "Preflight checks passed (boot mode: ${VFF_BOOT_MODE})"
 }
 
@@ -64,6 +60,20 @@ gforge_welcome_art() {
 gforge_welcome_art
 vff_preflight
 pkg_repo_setup
+
+if [[ ! -L /etc/portage/make.profile ]] || [[ ! -d /etc/portage/make.profile ]]; then
+    eselect profile set default/linux/amd64/23.0 2>/dev/null || true
+fi
+
+if ! command -v jq >/dev/null; then
+    log_info "Installing jq..."
+    emerge --ask=n --oneshot app-misc/jq || die "Failed to install jq"
+fi
+if ! command -v resolve-march-native >/dev/null; then
+    log_info "Installing resolve-march-native..."
+    emerge --ask=n --oneshot app-misc/resolve-march-native || true
+fi
+
 gforge_collect_config
 
 partition_disk
