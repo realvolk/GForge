@@ -59,11 +59,11 @@ gforge_welcome_art() {
 
 gforge_welcome_art
 vff_preflight
-pkg_repo_setup
 
-if [[ ! -L /etc/portage/make.profile ]] || [[ ! -d /etc/portage/make.profile ]]; then
-    eselect profile set 1 2>/dev/null || true
-fi
+chronyd -q 2>/dev/null || ntpd -q -g 2>/dev/null || true
+
+pkg_repo_setup
+eselect profile set 1 2>/dev/null || true
 
 if ! command -v jq >/dev/null; then
     log_info "Installing jq..."
